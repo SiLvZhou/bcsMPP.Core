@@ -625,7 +625,7 @@ namespace bcsMPP.Core
 
         public Item NewItemAdd()
         {
-
+            //测试
         }
         #endregion
 
