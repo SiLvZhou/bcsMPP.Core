@@ -623,6 +623,10 @@ namespace bcsMPP.Core
             }
         }
 
+        public Item NewItemAdd()
+        {
+
+        }
         #endregion
 
         #region "                   方法區(內部使用)"
