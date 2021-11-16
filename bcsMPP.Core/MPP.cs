@@ -1588,6 +1588,106 @@ namespace bcsMPP.Core
             }
         }
 
+        /// <summary>
+        /// MPP升版后流程图流程线及工序变更
+        /// </summary>
+        /// <param name="flow">MPP对象</param>
+        /// <returns></returns>
+        public Item mppProcessFlowUpdate(Item flow)
+        {
+            if (CheckLicense() == false)
+            {
+                return Cinn.newError(CstrErrMessage);
+            }
+            //旧版工艺流程规划ID
+            string thisID = flow.getID();
+            //工艺流程规划config_id
+            string config_id = flow.getProperty("config_id");
+            //新版工艺流程规划ID获取
+            Item newmpp_ProcessPlan = NewItemAdd("mpp_ProcessPlan", "config_id", config_id, "id");
+            newmpp_ProcessPlan.setProperty("is_current", "1");
+            newmpp_ProcessPlan = newmpp_ProcessPlan.apply();
+            //新版工艺流程规划ID
+            string ProcessPlanID = newmpp_ProcessPlan.getID();
+            //新版流程线
+            Item mpp_process_flow = NewItemAdd("mpp_process_flow", "source_id", ProcessPlanID, "id,path_to_id,path_from_id");
+            mpp_process_flow = mpp_process_flow.apply();
+            //旧版工序
+            Item mpp_OldOperation = NewItemAdd("mpp_Operation", "source_id", thisID, "id,bcs_configid");
+            mpp_OldOperation = mpp_OldOperation.apply();
+            //新版工序
+            Item mpp_Operation = NewItemAdd("mpp_Operation", "source_id", ProcessPlanID, "id,bcs_configid");
+            mpp_Operation = mpp_Operation.apply();
+
+            flowEdit(mpp_process_flow, mpp_Operation, mpp_OldOperation);
+            return flow;
+        }
+        /// <summary>
+        /// 数据库读取Item
+        /// </summary>
+        /// <returns></returns>
+        private Item NewItemAdd(string ItemName, string ProName, string ProText, string selects)
+        {
+            Item ItemAdd = innovator.newItem(ItemName, "get");
+            ItemAdd.setAttribute("select", selects);
+            ItemAdd.setProperty(ProName, ProText);
+            return ItemAdd;
+        }
+        private void flowEdit(Item mpp_process_flow, Item mpp_Operation, Item mpp_OldOperation)
+        {
+            //新版流程线循环
+            for (int i = 0; i < mpp_process_flow.getItemCount(); i++)
+            {
+                int index = 0;
+                Item processFlowEdit = innovator.newItem("mpp_process_flow", "edit");
+                Item processFlow = mpp_process_flow.getItemByIndex(i);
+                string processFlowID = processFlow.getID();
+                //流程线特殊性从第五位开始取
+                string processFlowTo = processFlow.getProperty("path_to_id").Substring(4);
+                string processFlowFrom = processFlow.getProperty("path_from_id").Substring(4);
+                //旧工序循环
+                for (int y = 0; y < mpp_OldOperation.getItemCount(); y++)
+                {
+                    Item OldOperation = mpp_OldOperation.getItemByIndex(y);
+                    string OldOperationID = OldOperation.getID();
+                    if (processFlowTo == OldOperationID)
+                    {
+                        processFlowEdit = processFlowEditS(OldOperation, mpp_Operation, processFlowEdit, processFlowID, "path_to_id");
+                        index++;
+                    }
+                    else if (processFlowFrom == OldOperationID)
+                    {
+                        processFlowEdit = processFlowEditS(OldOperation, mpp_Operation, processFlowEdit, processFlowID, "path_from_id");
+                        index++;
+                    }
+                    if (index == 2)
+                    {
+                        continue;
+                    }
+                }
+                processFlowEdit.apply();
+            }
+        }
+        private Item processFlowEditS(Item OldOperation, Item mpp_Operation, Item processFlowEdit, string processFlowID, string path)
+        {
+            string Oldbcs_configid = OldOperation.getProperty("bcs_configid");
+            for (int x = 0; x < mpp_Operation.getItemCount(); x++)
+            {
+                Item Operation = mpp_Operation.getItemByIndex(x);
+                string bcs_configid = Operation.getProperty("bcs_configid");
+                if (Oldbcs_configid == bcs_configid)
+                {
+                    string OperationID = Operation.getID();
+                    //流程线特殊rect表示工序
+                    processFlowEdit.setProperty(path, "rect" + OperationID);
+                    processFlowEdit.setAttribute("where", "id='" + processFlowID + "'");
+                    continue;
+                }
+            }
+            return processFlowEdit;
+        }
+
+
         #endregion
 
         #region "                   方法區(內部使用)"
