@@ -622,7 +622,6 @@ namespace bcsMPP.Core
                 return inn.newError("读取文件内容失败:" + ex.Message);
             }
         }
-	    
         #endregion
 
         #region "                   方法區(內部使用)"
