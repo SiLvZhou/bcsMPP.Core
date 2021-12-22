@@ -75,7 +75,7 @@ namespace bcsMPP.Core
             CbwGeneric.bwIOMInnovator = Cinn;
             CoCommon = new CGeneric.Common();
             bcsCCO = CCO;
-
+            
             //Modify by kenny 2016/04/01 ------
             string LanCode = Cinn.getI18NSessionContext().GetLanguageCode();
             if (LanCode == null) LanCode = "";
@@ -1350,7 +1350,14 @@ namespace bcsMPP.Core
 
         private bool canUpdate(string itemID,string ItemTypeID)
         {
-            return bcsCCO.Permissions.GetPermissions(itemID, ItemTypeID, "can_update", null);
+            try
+            {
+                return bcsCCO.Permissions.GetPermissions(itemID, ItemTypeID, "can_update", null);
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         public System.Web.Script.Serialization.JavaScriptSerializer JSONSerializer = new System.Web.Script.Serialization.JavaScriptSerializer { MaxJsonLength = int.MaxValue };
@@ -1622,6 +1629,7 @@ namespace bcsMPP.Core
             flowEdit(mpp_process_flow, mpp_Operation, mpp_OldOperation);
             return flow;
         }
+
         /// <summary>
         /// 数据库读取Item
         /// </summary>
@@ -1633,6 +1641,7 @@ namespace bcsMPP.Core
             ItemAdd.setProperty(ProName, ProText);
             return ItemAdd;
         }
+
         private void flowEdit(Item mpp_process_flow, Item mpp_Operation, Item mpp_OldOperation)
         {
             //新版流程线循环
@@ -1668,6 +1677,7 @@ namespace bcsMPP.Core
                 processFlowEdit.apply();
             }
         }
+
         private Item processFlowEditS(Item OldOperation, Item mpp_Operation, Item processFlowEdit, string processFlowID, string path)
         {
             string Oldbcs_configid = OldOperation.getProperty("bcs_configid");
